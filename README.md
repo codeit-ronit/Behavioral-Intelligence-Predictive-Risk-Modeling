@@ -1,5 +1,5 @@
 # 📊 Hyperliquid Behavioral & Sentiment Analytics  
-### Primetrade.ai – Data Science Intern Assignment
+
 
 [![Streamlit App](https://img.shields.io/badge/Live-Dashboard-brightgreen)](https://primetradeanalysis.streamlit.app/)
 
