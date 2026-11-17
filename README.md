@@ -152,9 +152,6 @@ Date, sentiment and trader filters apply to descriptive trades. ML evaluation an
 
 Screenshots are actual dashboard viewport captures; scroll within the application for content below the visible area.
 
-The original README also linked a [historical Streamlit dashboard](https://primetradeanalysis.streamlit.app/). That deployment has not been verified against this completed version; use the local setup below for the maintained implementation.
-
-
 ## Architecture
 
 ```mermaid
@@ -202,13 +199,12 @@ From the repository root, use **Python 3.13**:
 python3.13 -m venv venv
 source venv/bin/activate
 python -m pip install -r requirements.txt
-python -m src.modeling
 python -m streamlit run app.py
 ```
 
 On Windows PowerShell, use `venv\Scripts\Activate.ps1` instead of `source venv/bin/activate`.
 
-Open **http://localhost:8501**. Training is a separate one-time step; refreshing the dashboard does not train models. If the existing workspace already contains generated artifacts, activate its `venv` and run only the final command.
+Open **http://localhost:8501**. The dashboard uses the included saved data and evaluation artifacts. Training is optional for reproducing the analysis; refreshing the dashboard does not train models.
 
 <details>
 <summary>Interpreter setup and macOS troubleshooting</summary>
@@ -223,7 +219,7 @@ Use the printed executable with `-m venv venv`, then continue with activation an
 
 </details>
 
-Training uses at most two threads and requires no GPU. Six bounded tuning fits and three final supervised fits are used. Large generated datasets, the SQLite database and fitted models are ignored by Git; regenerate them after cloning. Small CSV/JSON results and screenshots are retained for review. Only load locally generated Joblib files.
+Training uses at most two threads and requires no GPU. Six bounded tuning fits and three final supervised fits are used. Large generated datasets, the SQLite database and fitted models are ignored by Git; regenerate them after cloning. The compact cleaned trade snapshot, small CSV/JSON results and screenshots are included, so the dashboard can run directly from a fresh checkout. Only load locally generated Joblib files.
 
 The pipeline writes maintained outputs to `outputs/portfolio/` and regenerates the result-dependent README and technical report. Change the README layout in `src/reporting.py` so later runs retain it. Preserved notebook exports are separate from the maintained artifacts.
 
@@ -231,6 +227,9 @@ The pipeline writes maintained outputs to `outputs/portfolio/` and regenerates t
 <summary>Optional preprocessing, checks and screenshot reproduction</summary>
 
 ```bash
+# Optional: reproduce models and evaluation from source data
+python -m src.modeling
+
 # Rebuild data only; rerun modeling afterwards if source data changes
 python -c "from src.preprocessing import preprocess; preprocess()"
 

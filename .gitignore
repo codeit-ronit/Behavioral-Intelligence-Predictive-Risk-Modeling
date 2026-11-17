@@ -15,6 +15,8 @@ __pycache__/
 .streamlit/
 # Reproducible generated data and fitted models (regenerate locally)
 outputs/portfolio/*.parquet
+# Small saved input required by the hosted dashboard
+!outputs/portfolio/clean_trades.parquet
 outputs/portfolio/*.sqlite
 outputs/portfolio/*.joblib
 outputs/portfolio/daily_features.csv
