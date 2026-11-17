@@ -80,7 +80,7 @@ Explore **{a['raw_trades']:,} Hyperliquid trades from {a['traders']} traders**, 
 
 **Python · Pandas · SQLite · scikit-learn · XGBoost · Streamlit · Plotly**
 
-[Setup & run](#setup--run) · [Model results](#evaluation-results) · [Dashboard](#dashboard) · [Technical report](docs/model_report.md) · [Verification](docs/final_verification.md)
+[Live dashboard](https://primetradeanalysis.streamlit.app/) · [Setup & run](#setup--run) · [Model results](#evaluation-results) · [Dashboard](#dashboard) · [Technical report](docs/model_report.md) · [Verification](docs/final_verification.md)
 
 | Trading records | Random Forest | XGBoost | Trader segmentation |
 | :--- | :--- | :--- | :--- |
