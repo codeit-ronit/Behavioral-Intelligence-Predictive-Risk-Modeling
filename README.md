@@ -152,6 +152,9 @@ Date, sentiment and trader filters apply to descriptive trades. ML evaluation an
 
 Screenshots are actual dashboard viewport captures; scroll within the application for content below the visible area.
 
+The original README also linked a [historical Streamlit dashboard](https://primetradeanalysis.streamlit.app/). That deployment has not been verified against this completed version; use the local setup below for the maintained implementation.
+
+
 ## Architecture
 
 ```mermaid
@@ -186,6 +189,13 @@ tests/test_pipeline.py         # Focused pipeline and dashboard checks
 
 ## Setup & run
 
+For a fresh checkout:
+
+```bash
+git clone https://github.com/codeit-ronit/Behavioral-Intelligence-Predictive-Risk-Modeling.git
+cd Behavioral-Intelligence-Predictive-Risk-Modeling
+```
+
 From the repository root, use **Python 3.13**:
 
 ```bash
@@ -195,6 +205,8 @@ python -m pip install -r requirements.txt
 python -m src.modeling
 python -m streamlit run app.py
 ```
+
+On Windows PowerShell, use `venv\Scripts\Activate.ps1` instead of `source venv/bin/activate`.
 
 Open **http://localhost:8501**. Training is a separate one-time step; refreshing the dashboard does not train models. If the existing workspace already contains generated artifacts, activate its `venv` and run only the final command.
 
