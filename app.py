@@ -1,206 +1,124 @@
-import streamlit as st
+"""Streamlit exploration of saved analytics; never trains models on refresh."""
+from pathlib import Path
+import json
 import pandas as pd
 import plotly.express as px
-from pathlib import Path
+import streamlit as st
 
-# ===============================
-# PAGE CONFIG
-# ===============================
-st.set_page_config(
-    page_title="Hyperliquid | Behavioral & Sentiment Analytics",
-    layout="wide"
-)
-
-# ===============================
-# GLOBAL STYLES
-# ===============================
-st.markdown("""
-<style>
-    .block-container {
-        padding-top: 2rem;
-    }
-    .metric-card {
-        background-color: #111827;
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid #1f2937;
-    }
-    .section-header {
-        font-size: 1.3rem;
-        font-weight: 600;
-        margin-top: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-    .section-sub {
-        color: #9CA3AF;
-        margin-bottom: 1rem;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# ===============================
-# LOAD DATA
-# ===============================
-BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "scripts"
+st.set_page_config(page_title='Behavioral Analytics & Predictive Risk Modeling', page_icon='📊', layout='wide')
+OUT = Path(__file__).resolve().parent / 'outputs' / 'portfolio'
+COLORS = ['#38bdf8', '#2dd4bf', '#fbbf24', '#a78bfa', '#fb7185']
+px.defaults.template = 'plotly_white'
+px.defaults.color_discrete_sequence = COLORS
+st.markdown('''<style>.block-container {padding-top:2rem;max-width:1450px}
+[data-testid="stMetric"] {background:#f0f7ff;border:1px solid #d5e5f4;border-radius:12px;padding:18px}
+h1 {letter-spacing:-.04em} </style>''', unsafe_allow_html=True)
 
 @st.cache_data
-def load_data():
-    df = pd.read_csv(DATA_DIR / "dashboard_data.csv")
-    clusters = pd.read_csv(DATA_DIR / "trader_clusters.csv")
-    return df, clusters
+def load_data(version):
+    return (pd.read_parquet(OUT/'clean_trades.parquet'), pd.read_csv(OUT/'trader_segments.csv'),
+            pd.read_csv(OUT/'model_comparison.csv'), pd.read_csv(OUT/'test_predictions.csv'),
+            pd.read_csv(OUT/'feature_importance.csv'), json.loads((OUT/'results.json').read_text()))
 
-df, clusters = load_data()
-
-# ===============================
-# SIDEBAR
-# ===============================
-st.sidebar.title("🛠 Analytics Controls")
-st.sidebar.caption("Filter protocol behavior by market psychology")
-
-sentiment_order = [
-    "Extreme Fear",
-    "Fear",
-    "Neutral",
-    "Greed",
-    "Extreme Greed"
-]
-
-sentiment_filter = st.sidebar.multiselect(
-    "Market Sentiment Regimes",
-    options=sentiment_order,
-    default=sentiment_order
-)
-
-filtered_df = df[df["classification"].isin(sentiment_filter)]
-
-# ===============================
-# HEADER
-# ===============================
-st.title("📊 Hyperliquid Behavioral & Sentiment Dashboard")
-st.markdown(
-    "A protocol-level deep dive into **trader psychology**, **behavioral archetypes**, "
-    "and **revenue dynamics** under different market regimes."
-)
-
+if not (OUT/'results.json').exists():
+    st.info('Generate the saved analysis first: python -m src.modeling')
+    st.stop()
+trades, segments, metrics, predictions, importance, results = load_data((OUT/'results.json').stat().st_mtime_ns)
+trades['date'] = pd.to_datetime(trades['date'])
+st.sidebar.title('Explore the dataset')
+section = st.sidebar.radio('Section', ['Overview', 'Behavioral Analysis', 'ML Predictions', 'Trader Segmentation'])
+dates = st.sidebar.date_input('Trade dates (UTC)', value=(trades.date.min().date(), trades.date.max().date()), min_value=trades.date.min().date(), max_value=trades.date.max().date())
+sentiments = st.sidebar.multiselect('Same-day sentiment', sorted(trades.classification.unique()), default=sorted(trades.classification.unique()))
+accounts = st.sidebar.multiselect('Traders (empty = all)', sorted(trades.account.unique()), format_func=lambda s:s[:10]+'…')
+filtered = trades[trades.classification.isin(sentiments)]
+if len(dates) == 2:
+    filtered = filtered[filtered.date.between(pd.Timestamp(dates[0]), pd.Timestamp(dates[1]))]
+if accounts:
+    filtered = filtered[filtered.account.isin(accounts)]
+st.sidebar.caption('Trade filters apply to Overview and Behavioral Analysis. Model evaluation and segments use their saved analysis populations.')
+st.title('Behavioral Analytics & Predictive Risk Modeling')
+st.caption('HYPERLIQUID · TRADER BEHAVIOR · HISTORICAL RISK · REPRODUCIBLE ML')
 st.divider()
 
-# ===============================
-# KPI ROW
-# ===============================
-k1, k2, k3, k4 = st.columns(4)
+if section in ['Overview', 'Behavioral Analysis'] and filtered.empty:
+    st.info('No trades match these filters. Choose a wider date range or another sentiment.')
+    st.stop()
 
-with k1:
-    st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-    st.metric("Total Trading Volume", f"${filtered_df['Size USD'].sum():,.0f}")
-    st.caption("Aggregate notional traded")
-    st.markdown('</div>', unsafe_allow_html=True)
+def chart(fig):
+    fig.update_layout(margin=dict(l=15,r=15,t=40,b=15), paper_bgcolor='rgba(0,0,0,0)', legend_title_text='')
+    st.plotly_chart(fig, width='stretch', theme=None)
 
-with k2:
-    st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-    total_volume = filtered_df["Size USD"].sum()
+if section == 'Overview':
+    st.subheader('A clear view of observed trading behavior')
+    cols = st.columns(4)
+    for col, label, val in zip(cols, ['Trades','Traders','Trading volume','Realized PnL'], [f'{len(filtered):,}', f'{filtered.account.nunique():,}', f'${filtered.volume.sum()/1e9:,.3f}B', f'${filtered.pnl.sum()/1e6:,.2f}M']):
+        col.metric(label,val)
+    st.caption(f"Exact totals: volume USD {filtered.volume.sum():,.2f} · realized PnL USD {filtered.pnl.sum():,.2f}")
+    left,right=st.columns([1.5,1])
+    daily = filtered.groupby('date',as_index=False).agg(volume=('volume','sum'),trades=('pnl','size'))
+    with left:
+        chart(px.area(daily,x='date',y='volume',title='Daily notional trading volume',labels={'volume':'USD','date':'UTC date'}))
+        st.caption('Notional turnover measures observed activity; it is not account equity or protocol revenue.')
+    with right:
+        counts=filtered.classification.value_counts().rename_axis('sentiment').reset_index(name='trades')
+        chart(px.pie(counts,names='sentiment',values='trades',hole=.6,title='Sentiment distribution by trade'))
+        st.caption('Same-day sentiment is descriptive. The predictive models use lagged sentiment.')
+    st.info(f"Source coverage: {results['data_audit']['date_start']} to {results['data_audit']['date_end']} · Exact duplicate rows removed: {results['data_audit']['exact_duplicates']:,}.")
 
-    if total_volume > 0:
-        efficiency = filtered_df["Closed PnL"].sum() / (total_volume / 1_000)
+elif section == 'Behavioral Analysis':
+    st.subheader('Activity, profitability, and market sentiment')
+    realized=filtered[filtered.pnl.ne(0)]
+    st.metric('Win rate on nonzero realized-PnL fills',f'{realized.pnl.gt(0).mean():.1%}' if len(realized) else 'N/A')
+    daily=filtered.groupby('date',as_index=False).agg(trades=('pnl','size'),pnl=('pnl','sum'))
+    left,right=st.columns(2)
+    with left: chart(px.line(daily,x='date',y='trades',title='Trading frequency over time',labels={'date':'UTC date','trades':'Fills'}))
+    with right: chart(px.line(daily,x='date',y='pnl',title='Daily realized PnL (before fees)',color_discrete_sequence=['#0f766e'],labels={'date':'UTC date','pnl':'Realized PnL (USD)'}))
+    grouped=filtered.groupby('classification',as_index=False).agg(volume=('volume','sum'),pnl=('pnl','sum'),trades=('pnl','size'),days=('date','nunique'))
+    grouped['pnl_per_1000']=1000*grouped.pnl/grouped.volume.replace(0,float('nan'))
+    grouped['avg_daily_volume']=grouped.volume/grouped.days
+    left,right=st.columns(2)
+    with left: chart(px.bar(grouped,x='classification',y='pnl_per_1000',color='classification',title='Realized PnL per $1,000 traded'))
+    with right: chart(px.bar(grouped,x='classification',y='avg_daily_volume',color='classification',title='Average daily volume by sentiment'))
+    st.caption('Associations in this selected sample do not establish causation or a profitable trading strategy. Zero-PnL fills are excluded from win-rate calculations; fees are not deducted.')
+    st.dataframe(grouped,width='stretch',hide_index=True)
+
+elif section == 'ML Predictions':
+    st.subheader('Predicting next-day absolute realized PnL')
+    low,high=results['thresholds_usd']
+    st.write(f'At the end of UTC day t, classify |realized PnL| on calendar day t+1: Low ≤ USD {low:,.2f}; Medium ≤ USD {high:,.2f}; High above USD {high:,.2f}. Only traders observed on both days have known outcomes.')
+    st.caption(f"Chronological holdout: {results['test_start']}–{results['test_end']} · {results['train_rows']:,} training rows / {results['test_rows']:,} test rows. Thresholds, imputation, and tuning use training history. Labels crossing split boundaries are purged.")
+    st.dataframe(metrics.style.format({c:'{:.3f}' for c in metrics.columns if c!='model'}),width='stretch',hide_index=True)
+    st.caption(f"Macro-F1 gives Low, Medium and High equal weight; it can hide weak recall for one class and does not assess probability calibration. This selected {results['data_audit']['traders']}-trader sample evaluates future activity, with accounts potentially shared across training and test.")
+    model=st.selectbox('Model',['Random Forest','XGBoost','Majority baseline'])
+    left,right=st.columns(2)
+    with left:
+        cm=results['reports'][model]['confusion_matrix']
+        chart(px.imshow(cm,x=results['classes'],y=results['classes'],text_auto=True,color_continuous_scale='Teal',title='Confusion matrix',labels={'x':'Predicted','y':'Actual','color':'Rows'}))
+    with right:
+        if model!='Majority baseline':
+            chart(px.bar(importance[importance.model.eq(model)].sort_values('importance'),x='importance',y='feature',orientation='h',title='Model feature importance'))
+        else: st.info('The baseline always predicts the most frequent training class.')
+    st.caption('Feature importance is model-specific and does not measure causation. Absolute PnL reflects size and activity as well as risk; large profits also receive High labels.')
+    prediction_filter=st.selectbox('Prediction class',['All','Low','Medium','High'])
+    shown=predictions if prediction_filter=='All' else predictions[predictions[model].eq(prediction_filter)]
+    st.dataframe(shown[['account','date','target_date','actual',model,model+' high_probability']],width='stretch',hide_index=True)
+    st.download_button('Download holdout predictions',predictions.to_csv(index=False),'test_predictions.csv','text/csv')
+    st.caption('Saved holdout predictions are retrospective evaluation, not a live forecast service. Probabilities are uncalibrated.')
+
+else:
+    st.subheader('Trader segments discovered from behavior')
+    clustering=results['clustering']
+    st.write(f"KMeans selected {clustering['selected_k']} clusters from k=2…6 using silhouette score ({clustering['silhouette']:.3f}).")
+    st.caption(f"Silhouette compares similarity within groups with separation between groups; higher suggests clearer separation under these features. These {results['data_audit']['traders']} traders form a small descriptive sample.")
+    st.caption('Features: activity, average trade size, total realized PnL, per-fill PnL standard deviation, and win rate. Signed log transforms reduce skew; RobustScaler handles scale differences. Segments describe the full dataset and do not enter historical risk predictions.')
+    options=sorted(segments.segment.unique())
+    chosen=st.multiselect('Segments',options,default=options)
+    subset=segments[segments.segment.isin(chosen)]
+    if subset.empty:
+        st.info('Select at least one segment.')
     else:
-        efficiency = 0
-    st.metric("PnL Efficiency", f"${efficiency:.2f}")
-    st.caption("PnL per $1k traded")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with k3:
-    st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-    st.metric("Active Traders", filtered_df["Account"].nunique())
-    st.caption("Unique market participants")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with k4:
-    st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-    if not filtered_df.empty:
-        top_sentiment = filtered_df["classification"].mode()[0]
-    else:
-        top_sentiment = "N/A"
-    st.metric("Dominant Sentiment", top_sentiment)
-    st.caption("Most frequent regime")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ===============================
-# SECTION: REGIME ANALYSIS
-# ===============================
-st.markdown('<div class="section-header">📈 PnL vs. Market Sentiment</div>', unsafe_allow_html=True)
-st.markdown('<div class="section-sub">How trader profitability shifts across emotional regimes</div>', unsafe_allow_html=True)
-
-fig_pnl = px.box(
-    filtered_df,
-    x="classification",
-    y="Closed PnL",
-    color="classification",
-    category_orders={"classification": sentiment_order},
-    template="plotly_dark"
-)
-fig_pnl.update_layout(showlegend=False)
-st.plotly_chart(fig_pnl, use_container_width=True)
-
-# ===============================
-# SECTION: ARCHETYPES
-# ===============================
-ARCHETYPE_MAP = {
-    0: "High-Frequency Scalpers",
-    1: "Disciplined Strategists",
-    2: "Institutional Whales",
-    3: "High-Variance Retail"
-}
-clusters["Archetype"] = clusters["Cluster"].map(ARCHETYPE_MAP)
-
-st.markdown('<div class="section-header">🎯 Trader Archetype Map</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div class="section-sub">'
-    'Behavioral clustering based on activity, size, and profitability'
-    '</div>',
-    unsafe_allow_html=True
-)
-
-fig_cluster = px.scatter(
-    clusters,
-    x="Activity",
-    y="Total_PnL",
-    size="Avg_Size",
-    color="Archetype",
-    hover_name="Account",
-    log_x=True,
-    template="plotly_dark"
-)
-
-st.plotly_chart(fig_cluster, use_container_width=True)
-
-# ===============================
-# SECTION: REVENUE ENGINE
-# ===============================
-st.markdown('<div class="section-header">🔮 Protocol Revenue Engine</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div class="section-sub">'
-    'Daily protocol volume as a proxy for fee generation'
-    '</div>',
-    unsafe_allow_html=True
-)
-
-vol_trend = (
-    filtered_df
-    .groupby("date")["Size USD"]
-    .sum()
-    .reset_index()
-)
-
-fig_vol = px.area(
-    vol_trend,
-    x="date",
-    y="Size USD",
-    template="plotly_dark",
-    color_discrete_sequence=["#00CC96"]
-)
-st.plotly_chart(fig_vol, use_container_width=True)
-
-# ===============================
-# FOOTER
-# ===============================
-st.success("✅ Insights generated using a  behavioral finance framework")
+        chart(px.scatter(subset,x='Activity',y='Total_PnL',size='Avg_Size',color='segment',hover_name='account',log_x=True,size_max=45,title='Activity versus realized profitability'))
+        for c,description in clustering['descriptions'].items(): st.write(f'**Segment {c}:** {description}')
+        st.dataframe(pd.read_csv(OUT/'cluster_profiles.csv'),width='stretch',hide_index=True)
+        chart(px.line(pd.read_csv(OUT/'cluster_search.csv'),x='k',y='silhouette',markers=True,title='Cluster-count selection'))
+        st.caption('Segment numbers are arbitrary. These patterns do not verify professional status, trading skill, fraud, or institutional ownership.')

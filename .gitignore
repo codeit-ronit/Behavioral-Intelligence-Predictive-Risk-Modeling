@@ -13,3 +13,15 @@ __pycache__/
 
 # Streamlit
 .streamlit/
+# Reproducible generated data and fitted models (regenerate locally)
+outputs/portfolio/*.parquet
+outputs/portfolio/*.sqlite
+outputs/portfolio/*.joblib
+outputs/portfolio/daily_features.csv
+.venv/
+
+# Local credentials and temporary logs
+.env
+.env.*
+!.env.example
+*.log

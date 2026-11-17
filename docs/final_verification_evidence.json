@@ -1,0 +1,220 @@
+{
+  "status": "PASS",
+  "source_rows": 211224,
+  "daily_rows": 2343,
+  "all_features_reconstructed": [
+    "trade_count",
+    "volume",
+    "avg_size",
+    "daily_pnl",
+    "win_rate",
+    "long_short_ratio",
+    "pnl_std",
+    "recent_trades_7d",
+    "sentiment_value"
+  ],
+  "train_target_max": "2025-02-02",
+  "test_feature_min": "2025-02-03",
+  "inner_target_max": "2024-11-24",
+  "validation_feature_min": "2024-11-25",
+  "thresholds": [
+    101.85903799999991,
+    1196.8005109999997
+  ],
+  "stability": [
+    {
+      "seed": 7,
+      "silhouette": 0.8124274573934867,
+      "inertia": 69.88108008659839,
+      "sizes": [
+        3,
+        29
+      ],
+      "ari_vs_saved": 1.0
+    },
+    {
+      "seed": 42,
+      "silhouette": 0.8124274573934867,
+      "inertia": 69.88108008659839,
+      "sizes": [
+        3,
+        29
+      ],
+      "ari_vs_saved": 1.0
+    },
+    {
+      "seed": 2026,
+      "silhouette": 0.8124274573934867,
+      "inertia": 69.88108008659839,
+      "sizes": [
+        3,
+        29
+      ],
+      "ari_vs_saved": 1.0
+    }
+  ],
+  "pairwise_ari": [
+    {
+      "seeds": [
+        7,
+        42
+      ],
+      "ari": 1.0
+    },
+    {
+      "seeds": [
+        7,
+        2026
+      ],
+      "ari": 1.0
+    },
+    {
+      "seeds": [
+        42,
+        2026
+      ],
+      "ari": 1.0
+    }
+  ],
+  "metrics_replayed": [
+    {
+      "model": "Majority baseline",
+      "accuracy": 0.3858173076923077,
+      "macro_f1": 0.1856027753686036,
+      "macro_precision": 0.1286057692307692,
+      "macro_recall": 0.3333333333333333
+    },
+    {
+      "model": "Random Forest",
+      "accuracy": 0.4807692307692308,
+      "macro_f1": 0.480974985816047,
+      "macro_precision": 0.4913999044433826,
+      "macro_recall": 0.484736206028962
+    },
+    {
+      "model": "XGBoost",
+      "accuracy": 0.4591346153846153,
+      "macro_f1": 0.4590284339822561,
+      "macro_precision": 0.4792470161233561,
+      "macro_recall": 0.4669475135943389
+    }
+  ],
+  "sentiment_timestamp_check": {
+    "matched_rows": 2342,
+    "all_precede_utc_t_plus_1_origin": true,
+    "source_revision_provenance_verified": false
+  },
+  "clean_environment": {
+    "status": "PASS",
+    "clean_python": "<isolated-venv>/bin/python",
+    "command": [
+      "<isolated-venv>/bin/python",
+      "-m",
+      "streamlit",
+      "run",
+      "app.py"
+    ],
+    "health": 200,
+    "rendered_sections": [
+      "Overview",
+      "Behavioral Analysis",
+      "ML Predictions",
+      "Trader Segmentation"
+    ],
+    "javascript_errors": [],
+    "trader_scatter": [
+      {
+        "name": "Segment 0",
+        "points": 29
+      },
+      {
+        "name": "Segment 1",
+        "points": 3
+      }
+    ],
+    "port": 8517,
+    "python_version": "3.13.11",
+    "include_system_site_packages": false,
+    "user_site_enabled": false,
+    "pip_check": "No broken requirements found.",
+    "installation": "requirements.txt installed successfully in a new venv",
+    "interpreter_fallback": "<installed-python-3.13>",
+    "initial_blocker": "python3.13: command not found (resolved with installed interpreter absolute path)",
+    "artifact_policy": "Existing outputs reused; no supervised training repeated.",
+    "path_note": "Machine-specific paths normalized for public documentation; verification used a newly created isolated environment and the installed Conda Python 3.13 interpreter."
+  },
+  "screenshots": {
+    "trader_segmentation.png": "e08ea4f8c0c4fc250f47cbbf163f6bf83a8b5c736d745c1702393ef2d5d45be8",
+    "behavioral_analysis.png": "b6c03f80c646f5ad531ee678dcc2d467991e8e28a131395a6470179aca4fba41",
+    "overview.png": "aff298875a12915e1c7d4a7c2287865f60427d811f2a537b533b6e321ee6496a",
+    "ml_predictions.png": "8cd351577995fcacb7dfeb307c263d4e8d7d6e8005ca26252cf063ea703e1dd8"
+  },
+  "resume_bullets": {
+    "Pandas/SQLite pipeline, 211224 records, historical alignment": "PASS: source fingerprints, independent reconstruction of all daily features, lagged sentiment and purged boundaries.",
+    "RF/XGBoost comparison, chronological validation, bounded tuning, baseline, 0.481 macro-F1": "PASS: training code has three candidates per model; saved search results and prediction replay support RF macro-F1 0.480974985816047.",
+    "Transformed/scaled KMeans, silhouette selection, two descriptive segments": "PASS: saved scaler/KMeans and profiles; original k=2..6 search; seeds 7,42,2026 each match saved labels up to permutation.",
+    "Four-section Streamlit/Plotly dashboard with saved predictions and analytics": "PASS: four sections rendered in Chrome with the isolated environment; dashboard reads saved CSV/JSON/Parquet artifacts."
+  },
+  "screenshots_before_presentation": {
+    "trader_segmentation.png": "d774ef7b12c8944b8a57e125fcace41660d046b7322a17ed08741a477eab48e3",
+    "behavioral_analysis.png": "fc44b40b905ca164548dbe07605066800d45a823e3db03cbee3e1fa6f2be14c6",
+    "overview.png": "aff298875a12915e1c7d4a7c2287865f60427d811f2a537b533b6e321ee6496a",
+    "ml_predictions.png": "b6d896d7a0b2be1b226a2affb18ec8138023807d9040ecfb82a63b063f7ad0ba"
+  },
+  "presentation_review": {
+    "review": [
+      {
+        "section": "Overview",
+        "plots": 2,
+        "horizontal_overflow": false,
+        "viewport": "1440x1050"
+      },
+      {
+        "section": "Behavioral Analysis",
+        "plots": 4,
+        "horizontal_overflow": false,
+        "viewport": "1440x1050"
+      },
+      {
+        "section": "ML Predictions",
+        "plots": 2,
+        "horizontal_overflow": false,
+        "viewport": "1440x1050"
+      },
+      {
+        "section": "Trader Segmentation",
+        "plots": 2,
+        "horizontal_overflow": false,
+        "viewport": "1440x1050"
+      },
+      {
+        "section": "Overview",
+        "plots": 2,
+        "horizontal_overflow": false,
+        "viewport": "1280x800"
+      },
+      {
+        "section": "Behavioral Analysis",
+        "plots": 4,
+        "horizontal_overflow": false,
+        "viewport": "1280x800"
+      },
+      {
+        "section": "ML Predictions",
+        "plots": 2,
+        "horizontal_overflow": false,
+        "viewport": "1280x800"
+      },
+      {
+        "section": "Trader Segmentation",
+        "plots": 2,
+        "horizontal_overflow": false,
+        "viewport": "1280x800"
+      }
+    ],
+    "javascript_errors": [],
+    "scope": "Presentation only: daily PnL line visibility and short metric/sample explanations; no training, model or metric changes.",
+    "readme": "Rendered preview, generated values and Markdown link/anchor checks passed.",
+    "resume_bullets": "All four remain supported by the prior verified implementation and unchanged evaluation artifacts."
+  }
+}

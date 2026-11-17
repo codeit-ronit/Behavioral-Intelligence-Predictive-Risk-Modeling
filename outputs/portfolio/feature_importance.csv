@@ -1,0 +1,19 @@
+model,feature,importance
+Random Forest,trade_count,0.12257666080852792
+Random Forest,volume,0.08508296571197903
+Random Forest,avg_size,0.0883140544440402
+Random Forest,daily_pnl,0.15918300603946867
+Random Forest,win_rate,0.026967388736582852
+Random Forest,long_short_ratio,0.07115661253400692
+Random Forest,pnl_std,0.19546729511869992
+Random Forest,recent_trades_7d,0.16653600516108605
+Random Forest,sentiment_value,0.08471601144560864
+XGBoost,trade_count,0.08423116058111191
+XGBoost,volume,0.08061519265174866
+XGBoost,avg_size,0.0730057805776596
+XGBoost,daily_pnl,0.16617156565189362
+XGBoost,win_rate,0.08308535069227219
+XGBoost,long_short_ratio,0.07721072435379028
+XGBoost,pnl_std,0.1705361306667328
+XGBoost,recent_trades_7d,0.1567930281162262
+XGBoost,sentiment_value,0.10835105180740356
