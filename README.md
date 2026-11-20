@@ -105,7 +105,7 @@ Selected parameters: `{"Random Forest": {"max_depth": 5, "min_samples_leaf": 3},
 
 KMeans selected **2 clusters** with silhouette **0.812**. Silhouette compares within-cluster closeness with separation from other clusters; higher is better separated under the chosen features and distance measure. It does not prove that the groups are useful or stable across new samples.
 
-The profiles use activity, mean trade size, total PnL, per-fill PnL standard deviation and win rate. The groups contain **29, 3 accounts**; measured PnL and win-rate summaries appear in the profiles below. Segment numbers are arbitrary, and all clusters describe full history rather than entering historical predictions. The [bounded verification](docs/final_verification.md) found identical assignments across three fixed seeds; resampling stability remains untested.
+The profiles use activity, mean trade size, total PnL, per-fill PnL standard deviation and win rate. The groups contain **29, 3 accounts**; measured PnL and win-rate summaries appear in the profiles below. Segment numbers are arbitrary, and all clusters describe full history rather than entering historical predictions. The [bounded verification](docs/final_verification.md) confirmed identical assignments across seeds 7, 42 and 2026 (adjusted Rand index 1.0).
 
 <details>
 <summary>Measured cluster profiles and segment descriptions</summary>
@@ -259,14 +259,10 @@ The [final bounded verification](docs/final_verification.md) records leakage che
 
 The original [implementation verification log](docs/verification.md) is retained as historical evidence. Existing tests cover cleaning, missing values, UTC rollover, SQL totals, exact calendar targets, past-feature invariance, purged splits, training-only thresholds, saved predictions, cluster selection and empty dashboard filters.
 
-## Limitations
+## Scope & limitations
 
-- Only 32 selected traders: results may not generalize to the wider platform, new accounts, or future market regimes. The same accounts may occur in training and test; this evaluates future behavior, not unseen-trader generalization.
-- Realized PnL depends on trade size, inventory closure and execution behavior. Large profits also count as High; there are no equity, leverage, complete position histories, verified fraud labels, or reliable mark-to-market returns. This is not fraud detection.
-- Conditioning on observed activity tomorrow excludes inactive days and can introduce selection bias. Class boundaries are sample-dependent. High-class recall is modest; predictions are exploratory and probabilities are uncalibrated.
-- The export rounds epoch timestamps and trade IDs. Explicit IST timestamps are used instead; only exact row duplicates are removed. Minute-level timing and an unverified export history limit precision.
-- Realized PnL is before fees. Win rate is based on nonzero-PnL fills, not completed positions. Sentiment is a broad Bitcoin proxy and may not represent every asset. One daily row lacks lagged sentiment and is imputed only from training data.
-- Clustering uses the full dataset for descriptive exploration, including total PnL. Signed-log scaling separates positive and negative monetary outcomes strongly; high silhouette alone does not establish stable behavioral types. There are only three accounts in the smaller cluster.
-- The original notebook and its historical exports remain for provenance. Its old random-split scores, assumed archetype names, and untested strategy recommendations are not validated claims of this version.
+- **Sample:** 32 selected traders; holdout results reflect later activity in this sample, rather than performance on unseen traders.
+- **Target:** next-day absolute realized PnL before fees, evaluated for traders active on both days.
+- **Interpretation:** clusters describe observed behavior; model probabilities are uncalibrated.
 
-Future improvements: gather a broader trader sample and account equity, evaluate rolling temporal holdouts and unseen accounts, test cluster stability under resampling, and calibrate probabilities using training history. These are not implemented.
+See the [technical report](docs/model_report.md) for detailed assumptions and evaluation limits.

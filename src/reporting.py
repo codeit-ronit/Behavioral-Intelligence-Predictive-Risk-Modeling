@@ -51,6 +51,11 @@ Selected parameters: `{json.dumps(r['selected_parameters'],sort_keys=True)}`. A 
 - The original notebook and its historical exports remain for provenance. Its old random-split scores, assumed archetype names, and untested strategy recommendations are not validated claims of this version.
 
 Future improvements: gather a broader trader sample and account equity, evaluate rolling temporal holdouts and unseen accounts, test cluster stability under resampling, and calibrate probabilities using training history. These are not implemented.'''
+    readme_limitations='''- **Sample:** 32 selected traders; holdout results reflect later activity in this sample, rather than performance on unseen traders.
+- **Target:** next-day absolute realized PnL before fees, evaluated for traders active on both days.
+- **Interpretation:** clusters describe observed behavior; model probabilities are uncalibrated.
+
+See the [technical report](docs/model_report.md) for detailed assumptions and evaluation limits.'''
     workflow='''```mermaid
 flowchart LR
     A[Trading and sentiment CSVs] --> B[Pandas cleaning and UTC dates]
@@ -164,7 +169,7 @@ Macro-F1 is the average of the Low, Medium and High class F1 scores, giving each
 
 KMeans selected **{r['clustering']['selected_k']} clusters** with silhouette **{r['clustering']['silhouette']:.3f}**. Silhouette compares within-cluster closeness with separation from other clusters; higher is better separated under the chosen features and distance measure. It does not prove that the groups are useful or stable across new samples.
 
-The profiles use activity, mean trade size, total PnL, per-fill PnL standard deviation and win rate. The groups contain **{", ".join(str(int(v)) for v in segments.Traders)} accounts**; measured PnL and win-rate summaries appear in the profiles below. Segment numbers are arbitrary, and all clusters describe full history rather than entering historical predictions. The [bounded verification](docs/final_verification.md) found identical assignments across three fixed seeds; resampling stability remains untested.
+The profiles use activity, mean trade size, total PnL, per-fill PnL standard deviation and win rate. The groups contain **{", ".join(str(int(v)) for v in segments.Traders)} accounts**; measured PnL and win-rate summaries appear in the profiles below. Segment numbers are arbitrary, and all clusters describe full history rather than entering historical predictions. The [bounded verification](docs/final_verification.md) confirmed identical assignments across seeds 7, 42 and 2026 (adjusted Rand index 1.0).
 
 <details>
 <summary>Measured cluster profiles and segment descriptions</summary>
@@ -300,9 +305,9 @@ The [final bounded verification](docs/final_verification.md) records leakage che
 
 The original [implementation verification log](docs/verification.md) is retained as historical evidence. Existing tests cover cleaning, missing values, UTC rollover, SQL totals, exact calendar targets, past-feature invariance, purged splits, training-only thresholds, saved predictions, cluster selection and empty dashboard filters.
 
-## Limitations
+## Scope & limitations
 
-{limitations}
+{readme_limitations}
 '''
     (ROOT/'README.md').write_text(readme)
     report=f'''# Model comparison and behavioral findings
